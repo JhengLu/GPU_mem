@@ -47,6 +47,37 @@ def measure_gpu_memory_latency(data, iters):
     latency = cuda.event_elapsed_time(start, end) * 1e6  # Latency in nanoseconds
     return latency / iters  # Average latency per access
 
+def measure_gpu_access_cpu_pinned_latency(data, iters):
+    threads_per_block = 256
+    blocks_per_grid = (data.size + threads_per_block - 1) // threads_per_block
+
+    # Allocate pinned memory on the CPU
+    d_data = cuda.pinned_array(data.shape, dtype=data.dtype)
+    d_data[:] = data[:]
+    d_out = cuda.device_array(data.size, dtype=np.int32)
+
+    # Check if data is on GPU memory
+    if cuda.is_cuda_array(d_data):
+        print("Data is on GPU memory.")
+    else:
+        print("Data is on CPU (pinned) memory.")
+
+    # Warm-up: Perform a dummy kernel launch to initialize the GPU
+    pointer_chase[blocks_per_grid, threads_per_block](d_data, iters, d_out)
+    cuda.synchronize()
+
+    # Measure latency using CUDA events
+    start = cuda.event()
+    end = cuda.event()
+
+    start.record()
+    pointer_chase[blocks_per_grid, threads_per_block](d_data, iters, d_out)
+    end.record()
+    end.synchronize()
+
+    latency = cuda.event_elapsed_time(start, end) * 1e6  # Latency in nanoseconds
+    return latency / iters  # Average latency per access
+
 if __name__ == '__main__':
     cuda.select_device(0)
     device = cuda.get_current_device()
@@ -63,3 +94,8 @@ if __name__ == '__main__':
         print("Measuring GPU memory access latency...")
         gpu_latency = measure_gpu_memory_latency(data, iters)
         print(f"GPU Memory Access Latency: {gpu_latency:.6f} ns")
+
+        # Measure latency for GPU accessing CPU pinned memory
+        print("Measuring GPU access to CPU (pinned) memory latency...")
+        cpu_pinned_latency = measure_gpu_access_cpu_pinned_latency(data, iters)
+        print(f"GPU Access to CPU (pinned) Memory Latency: {cpu_pinned_latency:.6f} ns")
