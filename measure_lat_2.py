@@ -83,7 +83,7 @@ if __name__ == '__main__':
     device = cuda.get_current_device()
     print(f"Compute Capability: {device.compute_capability}")
 
-    iters = 1000  # Number of iterations for pointer chasing
+    iters = 10000000  # Number of iterations for pointer chasing
 
     # Test with different values of n
     for n in [100, 1000, 10000, 100000, 1000000]:
@@ -95,7 +95,7 @@ if __name__ == '__main__':
         gpu_latency = measure_gpu_memory_latency(data, iters)
         print(f"GPU Memory Access Latency: {gpu_latency:.6f} ns")
 
-        # Measure latency for GPU accessing CPU pinned memory
-        print("Measuring GPU access to CPU (pinned) memory latency...")
-        cpu_pinned_latency = measure_gpu_access_cpu_pinned_latency(data, iters)
-        print(f"GPU Access to CPU (pinned) Memory Latency: {cpu_pinned_latency:.6f} ns")
+        # # Measure latency for GPU accessing CPU pinned memory
+        # print("Measuring GPU access to CPU (pinned) memory latency...")
+        # cpu_pinned_latency = measure_gpu_access_cpu_pinned_latency(data, iters)
+        # print(f"GPU Access to CPU (pinned) Memory Latency: {cpu_pinned_latency:.6f} ns")
